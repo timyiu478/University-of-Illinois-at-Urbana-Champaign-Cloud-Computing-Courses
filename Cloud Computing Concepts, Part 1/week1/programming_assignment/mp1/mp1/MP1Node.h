@@ -19,7 +19,7 @@
 /**
  * Macros
  */
-#define TREMOVE 20
+#define TREMOVE 12 
 #define TFAIL 5
 
 /*

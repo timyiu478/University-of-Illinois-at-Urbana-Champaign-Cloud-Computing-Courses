@@ -14,6 +14,7 @@
 #include "Member.h"
 #include "EmulNet.h"
 #include "Queue.h"
+#include <bitset>
 
 /**
  * Macros
@@ -104,6 +105,7 @@ public:
   void handleJOINREQ(MessageJOINREQ * msg);
   void handleJOINREP(MessageJOINREP * msg);
   void handleGOSSIP(MessageGOSSIP * msg);
+  void genRandomAddr(int id, short port, Member *memberNode, Address *address, int n);
 	virtual ~MP1Node();
 };
 

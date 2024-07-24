@@ -23,11 +23,7 @@
  1.0.0.0:0 [1] Node 4.0.0.0:0 joined at time 1
  10.0.0.0:0 [2] Trying to join...
  9.0.0.0:0 [2] Trying to join...
- 1.0.0.0:0 [2] Node 5.0.0.0:0 joined at time 2
- 1.0.0.0:0 [2] Node 6.0.0.0:0 joined at time 2
- 1.0.0.0:0 [2] Node 7.0.0.0:0 joined at time 2
- 1.0.0.0:0 [2] Node 8.0.0.0:0 joined at time 2
- 1.0.0.0:0 [3] Node 9.0.0.0:0 joined at time 3
- 1.0.0.0:0 [3] Node 10.0.0.0:0 joined at time 3
- 8.0.0.0:0 [100] Node failed at time=100
- 1.0.0.0:0 [500] @@time=500
+ 4.0.0.0:0 [2] Node 2.0.0.0:0 joined at time 2
+ 4.0.0.0:0 [2] Node 3.0.0.0:0 joined at time 2
+ 4.0.0.0:0 [2] Node 4.0.0.0:0 joined at time 2
+ 4.0.0.0:0 [2] Node 1.0.0.0:0 joined at time 2

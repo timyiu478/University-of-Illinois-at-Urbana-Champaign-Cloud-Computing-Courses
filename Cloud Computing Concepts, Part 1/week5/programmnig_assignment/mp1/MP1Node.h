@@ -58,10 +58,13 @@ typedef struct MessageJOINREP {
   MemberListEntry * memberList;
 }MessageJOINREP;
 
-typedef struct MemberNodeKey {
+
+typedef struct MessageJOINGOSSIP {
   int id;
   short port;
-}MemberNodeKey;
+  int numberOfMember;
+  MemberListEntry * memberList;
+}MessageGOSSIP;
 
 /**
  * CLASS NAME: MP1Node
@@ -77,6 +80,7 @@ private:
 	char NULLADDR[6];
   int id;
   short port;
+  int numberOfRandomTarget;
 
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
@@ -99,6 +103,7 @@ public:
 	void printAddress(Address *addr);
   void handleJOINREQ(MessageJOINREQ * msg);
   void handleJOINREP(MessageJOINREP * msg);
+  void handleGOSSIP(MessageGOSSIP * msg);
 	virtual ~MP1Node();
 };
 

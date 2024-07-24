@@ -98,16 +98,16 @@ int MP1Node::initThisNode(Address *joinaddr) {
 	*/
 	id = *(int*)(&memberNode->addr.addr);
 	port = *(short*)(&memberNode->addr.addr[4]);
-  numberOfRandomTarget = 4;
+  numberOfRandomTarget = 6;
 
 	memberNode->bFailed = false;
 	memberNode->inited = true;
 	memberNode->inGroup = false;
     // node is up!
 	memberNode->nnb = 0;
-	memberNode->heartbeat = 100;
+	memberNode->heartbeat = 0;
 	memberNode->pingCounter = TFAIL;
-	memberNode->timeOutCounter = 2 * TFAIL;
+	memberNode->timeOutCounter = TREMOVE;
     initMemberListTable(memberNode);
 
     return 0;
@@ -437,7 +437,8 @@ void MP1Node::nodeLoopOps() {
   memberNode->memberList = newMemberList;
 
   // Get random targets
-  int n = (int) min(memberNode->nnb, numberOfRandomTarget);
+  int n = (int) min(memberNode->nnb-1, numberOfRandomTarget);
+
   Address * randAddrs = (Address *) malloc(sizeof(Address)*n);
   genRandomAddr(id, port, memberNode, randAddrs, n);
 
@@ -510,6 +511,7 @@ void MP1Node::genRandomAddr(int id, short port, Member *memberNode, Address *add
   int count = 0;
 
   while(count < n) {
+    // std::cout << "n: " << n << ", listsize: " << memberNode->memberList.size() << std::endl;
     i = rand() % memberNode->memberList.size();
     if (bitmap[i] != true && (memberNode->memberList[i].id != id || memberNode->memberList[i].port != port)) {
       bitmap[i] = true;

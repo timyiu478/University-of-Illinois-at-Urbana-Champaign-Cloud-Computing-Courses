@@ -4,4 +4,4 @@ This repo stores the learning materials and the projects with my answers of the 
 
 # Projects
 
-- [A Gossip Sytle Membership Protocol](./Cloud Computing Concepts, Part 1/week5/programmnig_assignment/mp1)
+- [A Gossip Sytle Membership Protocol]('./Cloud Computing Concepts, Part 1/week5/programmnig_assignment/mp1')

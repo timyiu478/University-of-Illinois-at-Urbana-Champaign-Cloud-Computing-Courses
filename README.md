@@ -5,3 +5,4 @@ This repo stores the learning materials and the projects with my answers of the 
 # Projects
 
 - [A Gossip Sytle Membership Protocol](Cloud%20Computing%20Concepts,%20Part%201/week5/programmnig_assignment/mp1)
+- [A Fault-Tolerant Key-Value Store](Cloud%20Computing%20Concepts,%20Part%202/mp2_assignment/mp2_assignment)

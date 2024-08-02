@@ -14,12 +14,13 @@
 #include "Member.h"
 #include "EmulNet.h"
 #include "Queue.h"
+#include <bitset>
 
 /**
  * Macros
  */
 #define TREMOVE 20
-#define TFAIL 5
+#define TFAIL 10 
 
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
@@ -31,6 +32,7 @@
 enum MsgTypes{
     JOINREQ,
     JOINREP,
+    GOSSIP,
     DUMMYLASTMSGTYPE
 };
 
@@ -42,6 +44,28 @@ enum MsgTypes{
 typedef struct MessageHdr {
 	enum MsgTypes msgType;
 }MessageHdr;
+
+typedef struct MessageJOINREQ {
+  int id;
+  short port;
+  long heartbeat;
+}MessageJOINREQ;
+
+
+typedef struct MessageJOINREP {
+  int id;
+  short port;
+  int numberOfMember;
+  MemberListEntry * memberList;
+}MessageJOINREP;
+
+
+typedef struct MessageJOINGOSSIP {
+  int id;
+  short port;
+  int numberOfMember;
+  MemberListEntry * memberList;
+}MessageGOSSIP;
 
 /**
  * CLASS NAME: MP1Node
@@ -55,6 +79,9 @@ private:
 	Params *par;
 	Member *memberNode;
 	char NULLADDR[6];
+  int id;
+  short port;
+  int numberOfRandomTarget;
 
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
@@ -75,6 +102,10 @@ public:
 	Address getJoinAddress();
 	void initMemberListTable(Member *memberNode);
 	void printAddress(Address *addr);
+  void handleJOINREQ(MessageJOINREQ * msg);
+  void handleJOINREP(MessageJOINREP * msg);
+  void handleGOSSIP(MessageGOSSIP * msg);
+  void genRandomAddr(int id, short port, Member *memberNode, Address *address, int n);
 	virtual ~MP1Node();
 };
 

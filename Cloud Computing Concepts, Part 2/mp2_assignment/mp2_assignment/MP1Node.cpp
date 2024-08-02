@@ -95,9 +95,10 @@ void MP1Node::nodeStart(char *servaddrstr, short servport) {
 int MP1Node::initThisNode(Address *joinaddr) {
 	/*
 	 * This function is partially implemented and may require changes
-	 */
-	int id = *(int*)(&memberNode->addr.addr);
-	int port = *(short*)(&memberNode->addr.addr[4]);
+	*/
+	id = *(int*)(&memberNode->addr.addr);
+	port = *(short*)(&memberNode->addr.addr[4]);
+  numberOfRandomTarget = 6;
 
 	memberNode->bFailed = false;
 	memberNode->inited = true;
@@ -106,7 +107,7 @@ int MP1Node::initThisNode(Address *joinaddr) {
 	memberNode->nnb = 0;
 	memberNode->heartbeat = 0;
 	memberNode->pingCounter = TFAIL;
-	memberNode->timeOutCounter = -1;
+	memberNode->timeOutCounter = TREMOVE;
     initMemberListTable(memberNode);
 
     return 0;
@@ -160,9 +161,8 @@ int MP1Node::introduceSelfToGroup(Address *joinaddr) {
  * DESCRIPTION: Wind up this node and clean up state
  */
 int MP1Node::finishUpThisNode(){
-   /*
-    * Your code goes here
-    */
+  free(memberNode);
+  return 0;
 }
 
 /**
@@ -215,10 +215,180 @@ void MP1Node::checkMessages() {
  * DESCRIPTION: Message handler for different message types
  */
 bool MP1Node::recvCallBack(void *env, char *data, int size ) {
-	/*
-	 * Your code goes here
-	 */
+  MessageHdr * msgHdr = (MessageHdr *) malloc(sizeof(MessageHdr));
+
+  memcpy(msgHdr, data, sizeof(MessageHdr));
+
+  // Handle JOINREQ type message
+  if (msgHdr->msgType == JOINREQ) {
+    MessageJOINREQ joinReqMsg;
+
+    memcpy(&joinReqMsg.id, data+sizeof(MessageHdr), sizeof(int));
+    memcpy(&joinReqMsg.port, data+sizeof(MessageHdr)+sizeof(int), sizeof(short));
+    memcpy(&joinReqMsg.heartbeat, data+sizeof(MessageHdr)+sizeof(int)+sizeof(short)+1, sizeof(long));
+    
+    // std::cout << "Test: " << joinReqMsg.id  << ":" << joinReqMsg.port << " " << joinReqMsg.heartbeat << std::endl;
+    handleJOINREQ(&joinReqMsg);
+
+  }
+
+  // Handle JOINREP type message
+  if (msgHdr->msgType == JOINREP) {
+    MessageJOINREP msg;
+    memcpy(&msg.id, data+sizeof(MessageHdr), sizeof(int));
+    memcpy(&msg.port, data+sizeof(MessageHdr)+sizeof(int), sizeof(short));
+    memcpy(&msg.numberOfMember, data+sizeof(MessageHdr)+sizeof(int)+sizeof(short), sizeof(int));
+    msg.memberList = (MemberListEntry *) malloc(sizeof(MemberListEntry)*msg.numberOfMember);
+    memcpy(msg.memberList, data+sizeof(MessageHdr)+sizeof(int)+sizeof(short)+sizeof(int), sizeof(MemberListEntry)*msg.numberOfMember);
+    
+    handleJOINREP(&msg);
+
+    //std::cout << "Test: " << msg.id  << ":" << msg.port << " " << msg.numberOfMember << std::endl;
+    // for(int i=0;i<msg.numberOfMember; i++){
+    // std::cout << msg.memberList[i].id << std::endl;
+    // }
+
+    free(msg.memberList);
+  }
+
+  // Handle GOSSIP type message
+  if (msgHdr->msgType == GOSSIP) {
+    MessageGOSSIP msg;
+    memcpy(&msg.id, data+sizeof(MessageHdr), sizeof(int));
+    memcpy(&msg.port, data+sizeof(MessageHdr)+sizeof(int), sizeof(short));
+    memcpy(&msg.numberOfMember, data+sizeof(MessageHdr)+sizeof(int)+sizeof(short), sizeof(int));
+    msg.memberList = (MemberListEntry *) malloc(sizeof(MemberListEntry)*msg.numberOfMember);
+    memcpy(msg.memberList, data+sizeof(MessageHdr)+sizeof(int)+sizeof(short)+sizeof(int), sizeof(MemberListEntry)*msg.numberOfMember);
+    
+    handleGOSSIP(&msg);
+
+    //std::cout << "Test: " << msg.id  << ":" << msg.port << " " << msg.numberOfMember << std::endl;
+    // for(int i=0;i<msg.numberOfMember; i++){
+    // std::cout << msg.memberList[i].id << std::endl;
+    // }
+
+    free(msg.memberList);
+  }
+
+  free(msgHdr);
+
+  return true;
 }
+
+void MP1Node::handleGOSSIP(MessageGOSSIP * msg) {
+
+  for(int i=0; i < msg->numberOfMember; i++){
+    bool isExist = false;
+    MemberListEntry & e = msg->memberList[i];
+
+    for(int j=0; j < (int) memberNode->memberList.size(); j++){
+      if (e.id == memberNode->memberList[j].id && e.port == memberNode->memberList[j].port) {
+        isExist = true;
+
+        if (e.heartbeat != memberNode->memberList[j].heartbeat && (long)(memberNode->memberList[j].timestamp + memberNode->pingCounter) >= par->getcurrtime()) {
+          memberNode->memberList[j].heartbeat = e.heartbeat;   
+          memberNode->memberList[j].timestamp = (long) par->getcurrtime();   
+        }
+        break;
+      }
+    }
+    // Add non exist entries into memberList
+    if (!isExist) {
+      e.timestamp = (long) par->getcurrtime();
+      memberNode->memberList.push_back(e);
+      Address addr;
+      memcpy(&addr.addr, &e.id, sizeof(int));
+      memcpy(&addr.addr[4], &e.port, sizeof(short));
+      memberNode->nnb++;
+      log->logNodeAdd(&memberNode->addr, &addr);
+    }
+
+    if (e.id == id && e.port == port) {
+      memberNode->inGroup = true;
+      continue;
+    }
+  }
+
+  return;
+}
+
+void MP1Node::handleJOINREP(MessageJOINREP * msg) {
+
+  // Add non exist entries into memberList
+  // mark itself in the group
+  for(int i=0; i < msg->numberOfMember; i++){
+    bool isExist = false;
+    for(int j=0; j < (int) memberNode->memberList.size(); j++){
+      if (msg->memberList[i].id == memberNode->memberList[j].id && msg->memberList[i].port == memberNode->memberList[j].port) {
+        isExist = true;
+        break;
+      }
+    }
+    if (!isExist) {
+      msg->memberList[i].timestamp = (long) par->getcurrtime();
+      memberNode->memberList.push_back(msg->memberList[i]);
+      Address addr;
+      memcpy(&addr.addr, &msg->memberList[i].id, sizeof(int));
+      memcpy(&addr.addr[4], &msg->memberList[i].port, sizeof(short));
+      memberNode->nnb++;
+      log->logNodeAdd(&memberNode->addr, &addr);
+    }
+
+    if (msg->memberList[i].id == id && msg->memberList[i].port == port) {
+      memberNode->inGroup = true;
+      continue;
+    }
+  }
+  
+  return;
+}
+
+void MP1Node::handleJOINREQ(MessageJOINREQ * msg) {
+  bool inMemberList = false;
+
+  Address joinAddr;
+  memcpy(&joinAddr.addr, &msg->id, sizeof(int));
+  memcpy(&joinAddr.addr[4], &msg->port, sizeof(short));
+
+  for(const MemberListEntry& e: memberNode->memberList) {
+    if (e.id == msg->id && e.port == msg->port) {
+      inMemberList = true;
+      break;
+    }
+  }
+
+  // Add joiner to its member list if joiner is not in the list
+  if (!inMemberList) {
+    // Add the entry
+    MemberListEntry * entry = new MemberListEntry(msg->id, msg->port, msg->heartbeat, (long) par->getcurrtime());
+    memberNode->memberList.push_back(*entry);
+    // Increase nnb
+    memberNode->nnb++;
+
+    // printf("%d\n", entry->heartbeat);
+
+    // Log Node Add
+    log->logNodeAdd(&memberNode->addr, &joinAddr);
+  }
+
+  // Send the JOINREP back to joiner
+  MemberListEntry * memberListArray = memberNode->memberList.data();
+  int memberListSize = memberNode->memberList.size();
+  size_t replysize = sizeof(MessageHdr) + sizeof(int) + sizeof(short) + sizeof(int) + sizeof(MemberListEntry)*memberListSize;
+  MessageHdr * reply = (MessageHdr *) malloc(replysize * sizeof(char));
+  reply->msgType = JOINREP;
+  memcpy((char *)(reply+1), &id, sizeof(int));
+  memcpy((char *)(reply+1)+sizeof(int), &port, sizeof(short));
+  memcpy((char *)(reply+1)+sizeof(int)+sizeof(short), &memberListSize, sizeof(int));
+  memcpy((char *)(reply+1)+sizeof(int)+sizeof(short)+sizeof(int), memberListArray, sizeof(MemberListEntry)*memberListSize);
+
+  emulNet->ENsend(&memberNode->addr, &joinAddr, (char *)reply, replysize);
+
+  free(reply);
+
+  return;
+}
+
 
 /**
  * FUNCTION NAME: nodeLoopOps
@@ -228,12 +398,66 @@ bool MP1Node::recvCallBack(void *env, char *data, int size ) {
  * 				Propagate your membership list
  */
 void MP1Node::nodeLoopOps() {
+ 
+  bool inMemberList = false;
+  vector<MemberListEntry> newMemberList;
 
-	/*
-	 * Your code goes here
-	 */
+  // Increase its heartbeat  
+  memberNode->heartbeat++;
 
-    return;
+  // Update new membership list
+  for(int j=0; j < (int) memberNode->memberList.size(); j++){
+    MemberListEntry * e = &memberNode->memberList[j];
+    if (e->id == id && e->port == port) {
+      inMemberList = true;
+      e->heartbeat = memberNode->heartbeat; 
+      e->timestamp = (long) par->getcurrtime(); 
+    }
+    // Remove timeouted entry 
+    if ( (long) (e->timestamp + memberNode->timeOutCounter) < par->getcurrtime() ) {
+      Address address;
+      memcpy(&address.addr[0], &e->id, sizeof(int));
+      memcpy(&address.addr[4], &e->port, sizeof(short));
+      if(!isNullAddress(&address)) {
+        memberNode->nnb--;
+        log->logNodeRemove(&memberNode->addr, &address); 
+      }
+      continue;
+    }
+    newMemberList.push_back(*e);
+  }
+
+  // Add itself into the member list if it is not in the group
+  if (!inMemberList) {
+    MemberListEntry * e = new MemberListEntry(id, port, memberNode->heartbeat, par->getcurrtime());
+    newMemberList.push_back(*e);
+  }
+
+  // memberList = new member list
+  memberNode->memberList = newMemberList;
+
+  // Get random targets
+  int n = (int) min(memberNode->nnb-1, numberOfRandomTarget);
+
+  Address * randAddrs = (Address *) malloc(sizeof(Address)*n);
+  genRandomAddr(id, port, memberNode, randAddrs, n);
+
+  // Send GOSSIP msg to selected random targets
+  for (int i =0; i < n; i++) {
+    MemberListEntry * memberListArray = memberNode->memberList.data();
+    int memberListSize = memberNode->memberList.size();
+    size_t msgsize = sizeof(MessageHdr) + sizeof(int) + sizeof(short) + sizeof(int) + sizeof(MemberListEntry)*memberListSize;
+    MessageHdr * msg = (MessageHdr *) malloc(msgsize * sizeof(char));
+    msg->msgType = GOSSIP;
+    memcpy((char *)(msg+1), &id, sizeof(int));
+    memcpy((char *)(msg+1)+sizeof(int), &port, sizeof(short));
+    memcpy((char *)(msg+1)+sizeof(int)+sizeof(short), &memberListSize, sizeof(int));
+    memcpy((char *)(msg+1)+sizeof(int)+sizeof(short)+sizeof(int), memberListArray, sizeof(MemberListEntry)*memberListSize);
+
+    emulNet->ENsend(&memberNode->addr, &randAddrs[i], (char *)msg, msgsize);
+  }
+
+  return;
 }
 
 /**
@@ -278,4 +502,24 @@ void MP1Node::printAddress(Address *addr)
 {
     printf("%d.%d.%d.%d:%d \n",  addr->addr[0],addr->addr[1],addr->addr[2],
                                                        addr->addr[3], *(short*)&addr->addr[4]) ;    
+}
+
+void MP1Node::genRandomAddr(int id, short port, Member *memberNode, Address *address, int n) {
+  bitset<512> bitmap = 0; 
+  int i;
+  char addr[6];
+  int count = 0;
+
+  while(count < n) {
+    // std::cout << "n: " << n << ", listsize: " << memberNode->memberList.size() << std::endl;
+    i = rand() % memberNode->memberList.size();
+    if (bitmap[i] != true && (memberNode->memberList[i].id != id || memberNode->memberList[i].port != port)) {
+      bitmap[i] = true;
+      
+      memcpy(&addr[0], &memberNode->memberList[i].id, sizeof(int));
+      memcpy(&addr[4], &memberNode->memberList[i].port, sizeof(short));
+      memcpy(&address[count].addr, &addr, sizeof(char)*6);
+      count++;
+    }
+  }
 }

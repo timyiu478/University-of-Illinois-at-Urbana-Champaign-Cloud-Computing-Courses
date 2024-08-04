@@ -60,10 +60,10 @@ void MP2Node::updateRing() {
 	 * Step 3: Run the stabilization protocol IF REQUIRED
 	 */
 	// Run stabilization protocol if the hash table size is greater than zero and if there has been a changed in the ring
-  change = curMemList == ring;
-  if (!change) {
-    return;
-  }
+  // change = curMemList == ring;
+  // if (!change) {
+    // return;
+  // }
 
 }
 
@@ -343,6 +343,7 @@ bool MP2Node::deletekey(string key) {
   if (ht->deleteKey(key)) { return true; }
   if (sec_ht->deleteKey(key)) { return true; }
   if (ter_ht->deleteKey(key)) { return true; }
+  return false;
 }
 
 /**

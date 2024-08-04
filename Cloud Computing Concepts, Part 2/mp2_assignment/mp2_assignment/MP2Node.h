@@ -29,6 +29,12 @@
  * 				3) Server side CRUD APIs
  * 				4) Client side CRUD APIs
  */
+struct Transaction {
+  int successCount;
+  int failCount;
+  MessageType messageType;
+};
+
 class MP2Node {
 private:
 	// Vector holding the next two neighbors in the ring who have my replicas
@@ -39,6 +45,12 @@ private:
 	vector<Node> ring;
 	// Hash Table
 	HashTable * ht;
+	// Secondary Hash Table to hold the keys of the previous neighbor in the ring
+	HashTable * sec_ht;
+	// Tertiary Hash Table to hold the keys of the second previous neighbor in the ring
+	HashTable * ter_ht;
+  // Hash Table to keep track of the transactions
+  map<int, Transaction>* trans_ht;
 	// Member representing this member
 	Member *memberNode;
 	// Params object
@@ -72,6 +84,12 @@ public:
 
 	// handle messages from receiving queue
 	void checkMessages();
+  void handleReplyMsg(Message msg);
+  void handleReadReplyMsg(Message msg);
+  void handleCreateMsg(Message msg);
+  void handleReadMsg(Message msg);
+  void handleUpdateMsg(Message msg);
+  void handleDeleteMsg(Message msg);
 
 	// coordinator dispatches messages to corresponding nodes
 	void dispatchMessages(Message message);
@@ -90,5 +108,6 @@ public:
 
 	~MP2Node();
 };
+
 
 #endif /* MP2NODE_H_ */

@@ -14,9 +14,6 @@ MP2Node::MP2Node(Member *memberNode, Params *par, EmulNet * emulNet, Log * log, 
 	this->emulNet = emulNet;
 	this->log = log;
 	ht = new HashTable();
-	sec_ht = new HashTable();
-	ter_ht = new HashTable();
-	trans_ht = new map<int, Transaction>();
 	this->memberNode->addr = *address;
 }
 
@@ -122,15 +119,15 @@ void MP2Node::clientCreate(string key, string value) {
   // 1) Constructs the message
   int transID = ++g_transID;
   int timestamp = par->getcurrtime();
-  Address fromAddress = memberNode->addr;
+  Address fromAddress = memberNode->nodeAddress;
 
   Entry primary_entry = Entry(value, timestamp, PRIMARY); 
-  Entry secondary_entry = Entry(value, timestamp, SECONDARY); 
+  Entry seconday_entry = Entry(value, timestamp, SECONDARY); 
   Entry tertiary_entry = Entry(value, timestamp, TERTIARY); 
 
-  Message primary_msg = Message(transID, fromAddress, CREATE, key, primary_entry.convertToString(), PRIMARY);
-  Message secondary_msg = Message(transID, fromAddress, CREATE, key, secondary_entry.convertToString(), SECONDARY);
-  Message tertiary_msg = Message(transID, fromAddress, CREATE, key, tertiary_entry.convertToString(), TERTIARY);
+  Message primary_msg = Message(transID, fromAddress, CREATE, key, primary_entry, PRIMARY);
+  Message secondary_msg = Message(transID, fromAddress, CREATE, key, secondary_entry, SECONDARY);
+  Message tertiary_msg = Message(transID, fromAddress, CREATE, key, tertiary_entry, TERTIARY);
 
   // 2) Finds the replicas of this key
   vector<Node> nodes = findNodes(key);
@@ -139,9 +136,6 @@ void MP2Node::clientCreate(string key, string value) {
 	emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, primary_msg.toString());
 	emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, secondary_msg.toString());
 	emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, tertiary_msg.toString());
-
-  // 4) Add transaction
-  trans_ht->insert({transID, {0, 0, CREATE}});
 }
 
 /**
@@ -159,7 +153,8 @@ void MP2Node::clientRead(string key){
 	 */
   // 1) Constructs the message
   int transID = ++g_transID;
-  Address fromAddress = memberNode->addr;
+  int timestamp = par->getcurrtime();
+  Address fromAddress = memberNode->nodeAddress;
 
   Message msg = Message(transID, fromAddress, READ, key);
 
@@ -170,9 +165,6 @@ void MP2Node::clientRead(string key){
 	emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, msg.toString());
 	emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, msg.toString());
 	emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, msg.toString());
-
-  // 4) Add transaction
-  trans_ht->insert({transID, {0, 0, READ}});
 }
 
 /**
@@ -191,15 +183,15 @@ void MP2Node::clientUpdate(string key, string value){
   // 1) Constructs the message
   int transID = ++g_transID;
   int timestamp = par->getcurrtime();
-  Address fromAddress = memberNode->addr;
+  Address fromAddress = memberNode->nodeAddress;
 
   Entry primary_entry = Entry(value, timestamp, PRIMARY); 
-  Entry secondary_entry = Entry(value, timestamp, SECONDARY); 
+  Entry seconday_entry = Entry(value, timestamp, SECONDARY); 
   Entry tertiary_entry = Entry(value, timestamp, TERTIARY); 
 
-  Message primary_msg = Message(transID, fromAddress, UPDATE, key, primary_entry.convertToString(), PRIMARY);
-  Message secondary_msg = Message(transID, fromAddress, UPDATE, key, secondary_entry.convertToString(), SECONDARY);
-  Message tertiary_msg = Message(transID, fromAddress, UPDATE, key, tertiary_entry.convertToString(), TERTIARY);
+  Message primary_msg = Message(transID, fromAddress, UPDATE, key, primary_entry, PRIMARY);
+  Message secondary_msg = Message(transID, fromAddress, UPDATE, key, secondary_entry, SECONDARY);
+  Message tertiary_msg = Message(transID, fromAddress, UPDATE, key, tertiary_entry, TERTIARY);
 
   // 2) Finds the replicas of this key
   vector<Node> nodes = findNodes(key);
@@ -208,9 +200,6 @@ void MP2Node::clientUpdate(string key, string value){
 	emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, primary_msg.toString());
 	emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, secondary_msg.toString());
 	emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, tertiary_msg.toString());
-
-  // 4) Add transaction
-  trans_ht->insert({transID, {0, 0, UPDATE}});
 }
 
 /**
@@ -228,7 +217,8 @@ void MP2Node::clientDelete(string key){
 	 */
   // 1) Constructs the message
   int transID = ++g_transID;
-  Address fromAddress = memberNode->addr;
+  int timestamp = par->getcurrtime();
+  Address fromAddress = memberNode->nodeAddress;
 
   Message msg = Message(transID, fromAddress, DELETE, key);
 
@@ -239,9 +229,6 @@ void MP2Node::clientDelete(string key){
 	emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, msg.toString());
 	emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, msg.toString());
 	emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, msg.toString());
-
-  // 4) Add transaction
-  trans_ht->insert({transID, {0, 0, DELETE}});
 }
 
 /**
@@ -298,8 +285,6 @@ string MP2Node::readKey(string key) {
   if (value != "") {
     return value;
   }
-
-  return "";
 }
 
 /**
@@ -363,6 +348,7 @@ void MP2Node::checkMessages() {
 	/*
 	 * Declare your local variables here
 	 */
+  Message msg;
 
 	// dequeue all messages and handle them
 	while ( !memberNode->mp2q.empty() ) {
@@ -378,16 +364,14 @@ void MP2Node::checkMessages() {
 		/*
 		 * Handle the message types here
 		 */
-    Message msg = Message(message);
+    msg = Message(message);
    
     // CREATE, READ, UPDATE, DELETE, REPLY, READREPLY
     switch (msg.type) {
-      case CREATE: handleCreateMsg(msg); break;
-      case READ: handleReadMsg(msg); break;
-      case UPDATE: handleUpdateMsg(msg); break;
-      case DELETE: handleDeleteMsg(msg); break;
-      case REPLY: handleReplyMsg(msg); break;
-      case READREPLY: handleReadReplyMsg(msg); break;
+      case CREATE: break;
+      case READ: break;
+      case UPDATE: break;
+      case DELETE: break;
     } 
 
 	}
@@ -398,103 +382,17 @@ void MP2Node::checkMessages() {
 	 */
 }
 
-void MP2Node::handleReplyMsg(Message msg) {
-  Transaction tran = trans_ht->at(msg.transID);
-
-  if (msg.success) {
-    tran.successCount++;
-  } else {
-    tran.failCount++;
-  }
-
-  if (tran.successCount > 1) {
-    switch (msg.type) {
-      case CREATE: log->logCreateSuccess(&memberNode->addr, true, msg.transID, msg.key, msg.value); break; 
-      case READ: log->logReadSuccess(&memberNode->addr, true, msg.transID, msg.key, msg.value); break; 
-      case UPDATE: log->logUpdateSuccess(&memberNode->addr, true, msg.transID, msg.key, msg.value); break; 
-      case DELETE: log->logDeleteSuccess(&memberNode->addr, true, msg.transID, msg.key); break; 
-    }
-    trans_ht->erase(msg.transID);
-  } 
-
-  if (tran.failCount > 1) {
-    switch (msg.type) {
-      case CREATE: log->logCreateFail(&memberNode->addr, true, msg.transID, msg.key, msg.value); break; 
-      case READ: log->logReadFail(&memberNode->addr, true, msg.transID, msg.key); break; 
-      case UPDATE: log->logUpdateFail(&memberNode->addr, true, msg.transID, msg.key, msg.value); break; 
-      case DELETE: log->logDeleteFail(&memberNode->addr, true, msg.transID, msg.key); break; 
-    }
-    trans_ht->erase(msg.transID);
-  }
-}
-
-void MP2Node::handleReadReplyMsg(Message msg) {
-  Transaction tran = trans_ht->at(msg.transID);
-
-  if (msg.value == "") {
-    tran.failCount++;
-  } else {
-    tran.successCount++;
-  }
-
-  if (tran.successCount > 1) {
-    log->logReadSuccess(&memberNode->addr, true, msg.transID, msg.key, msg.value);
-    trans_ht->erase(msg.transID);
-  } 
-  if (tran.failCount > 1) {
-    log->logReadFail(&memberNode->addr, true, msg.transID, msg.key);
-    trans_ht->erase(msg.transID);
-  }
-}
-
-
 void MP2Node::handleCreateMsg(Message msg) {
-  bool isCreated = createKeyValue(msg.key, msg.value, msg.replica);
-  Message reply = Message(msg.transID, memberNode->addr, REPLY, isCreated); 
-	emulNet->ENsend(&memberNode->addr, &msg.fromAddr, reply.toString());
-
-  if (isCreated) {
-    log->logCreateSuccess(&memberNode->addr, false, msg.transID, msg.key, msg.value);
-  } else {
-    log->logCreateFail(&memberNode->addr, false, msg.transID, msg.key, msg.value);
-  }
+  bool isCreated = createKeyValue(msg
 }
 
 void MP2Node::handleReadMsg(Message msg) {
-  string value = readKey(msg.key);
-  Message reply = Message(msg.transID, memberNode->addr, value); 
-
-	emulNet->ENsend(&memberNode->addr, &msg.fromAddr, reply.toString());
-
-  if (value != "") {
-    log->logReadSuccess(&memberNode->addr, false, msg.transID, msg.key, value);
-  } else {
-    log->logReadFail(&memberNode->addr, false, msg.transID, msg.key);
-  }
 }
 
 void MP2Node::handleUpdateMsg(Message msg) {
-  bool isUpdated = updateKeyValue(msg.key, msg.value, msg.replica);
-  Message reply = Message(msg.transID, memberNode->addr, REPLY, isUpdated); 
-	emulNet->ENsend(&memberNode->addr, &msg.fromAddr, reply.toString());
-
-  if (isUpdated) {
-    log->logUpdateSuccess(&memberNode->addr, false, msg.transID, msg.key, msg.value);
-  } else {
-    log->logUpdateFail(&memberNode->addr, false, msg.transID, msg.key, msg.value);
-  }
 }
 
 void MP2Node::handleDeleteMsg(Message msg) {
-  bool isDeleted = deletekey(msg.key);
-  Message reply = Message(msg.transID, memberNode->addr, REPLY, isDeleted); 
-	emulNet->ENsend(&memberNode->addr, &msg.fromAddr, reply.toString());
-
-  if (isDeleted) {
-    log->logDeleteSuccess(&memberNode->addr, false, msg.transID, msg.key);
-  } else {
-    log->logDeleteFail(&memberNode->addr, false, msg.transID, msg.key);
-  }
 }
 
 /**
@@ -565,5 +463,4 @@ void MP2Node::stabilizationProtocol() {
 	/*
 	 * Implement this
 	 */
-  return;
 }

@@ -25,6 +25,9 @@ MP2Node::MP2Node(Member *memberNode, Params *par, EmulNet * emulNet, Log * log, 
  */
 MP2Node::~MP2Node() {
 	delete ht;
+	delete sec_ht;
+	delete ter_ht;
+	delete trans_ht;
 	delete memberNode;
 }
 
@@ -136,9 +139,11 @@ void MP2Node::clientCreate(string key, string value) {
   vector<Node> nodes = findNodes(key);
 
   // 3) Sends a message to the replica
-	emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, primary_msg.toString());
-	emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, secondary_msg.toString());
-	emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, tertiary_msg.toString());
+  for (unsigned i = 0; i < nodes.size(); i++) {
+    if (i==0) { emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, primary_msg.toString()); }
+    if (i==1) { emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, secondary_msg.toString()); }
+    if (i==2) { emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, tertiary_msg.toString()); }
+  }
 
   // 4) Add transaction
   trans_ht->insert({transID, {0, 0, CREATE}});
@@ -167,10 +172,9 @@ void MP2Node::clientRead(string key){
   vector<Node> nodes = findNodes(key);
 
   // 3) Sends a message to the replica
-	emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, msg.toString());
-	emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, msg.toString());
-	emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, msg.toString());
-
+  for (unsigned i = 0; i < nodes.size(); i++) {
+	  emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, msg.toString());
+  }
   // 4) Add transaction
   trans_ht->insert({transID, {0, 0, READ}});
 }
@@ -205,9 +209,11 @@ void MP2Node::clientUpdate(string key, string value){
   vector<Node> nodes = findNodes(key);
 
   // 3) Sends a message to the replica
-	emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, primary_msg.toString());
-	emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, secondary_msg.toString());
-	emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, tertiary_msg.toString());
+  for (unsigned i = 0; i < nodes.size(); i++) {
+    if (i==0) { emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, primary_msg.toString()); }
+    if (i==1) { emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, secondary_msg.toString()); }
+    if (i==2) { emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, tertiary_msg.toString()); }
+  }
 
   // 4) Add transaction
   trans_ht->insert({transID, {0, 0, UPDATE}});
@@ -236,9 +242,9 @@ void MP2Node::clientDelete(string key){
   vector<Node> nodes = findNodes(key);
 
   // 3) Sends a message to the replica
-	emulNet->ENsend(&fromAddress, &nodes[0].nodeAddress, msg.toString());
-	emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, msg.toString());
-	emulNet->ENsend(&fromAddress, &nodes[2].nodeAddress, msg.toString());
+  for (unsigned i = 0; i < nodes.size(); i++) {
+	  emulNet->ENsend(&fromAddress, &nodes[1].nodeAddress, msg.toString());
+  }
 
   // 4) Add transaction
   trans_ht->insert({transID, {0, 0, DELETE}});

@@ -358,14 +358,17 @@ if [ "${read_test3_part1_fail_count}" -eq 1 ]
 then
 	READ_TEST3_PART1_STATUS="${SUCCESS}"
 fi
+echo "read test 3 part 2 success count: ${read_test3_part2_success_count}"
 if [ "${read_test3_part2_success_count}" -eq "${QUORUMPLUSONE}" -o "${read_test3_part2_success_count}" -eq "${RFPLUSONE}" ]
 then
 	READ_TEST3_PART2_STATUS="${SUCCESS}"
 fi
+echo "read test 4 success count: ${read_test4_success_count}"
 if [ "${read_test4_success_count}" -eq "${QUORUMPLUSONE}" -o "${read_test4_success_count}" -eq "${RFPLUSONE}" ]
 then
 	READ_TEST4_STATUS="${SUCCESS}"
 fi
+echo "read test 5 fail count: ${read_test5_fail_count}"
 if [ "${read_test5_fail_count}" -eq "${QUORUMPLUSONE}" -o "${read_test5_fail_count}" -eq "${RFPLUSONE}" ]
 then
 	READ_TEST5_STATUS="${SUCCESS}"
@@ -379,10 +382,12 @@ if [ "${READ_TEST2_STATUS}" -eq "${SUCCESS}" ]
 then
 	READ_TEST2_SCORE=9
 fi
+echo "${READ_TEST3_PART1_STATUS} ${SUCCESS}"
 if [ "${READ_TEST3_PART1_STATUS}" -eq "${SUCCESS}" ]
 then
 	READ_TEST3_PART1_SCORE=9
 fi
+echo "${READ_TEST3_PART2_STATUS} ${SUCCESS}"
 if [ "${READ_TEST3_PART2_STATUS}" -eq "${SUCCESS}" ]
 then
 	READ_TEST3_PART2_SCORE=10
@@ -591,10 +596,12 @@ if [ "${UPDATE_TEST3_PART1_STATUS}" -eq "${SUCCESS}" ]
 then
 	UPDATE_TEST3_PART1_SCORE=9
 fi
+echo "update test 3 part 2: ${update_test3_part2_success_count}"
 if [ "${UPDATE_TEST3_PART2_STATUS}" -eq "${SUCCESS}" ]
 then
 	UPDATE_TEST3_PART2_SCORE=10
 fi
+echo "update test 4: ${update_test4_success_count}"
 if [ "${UPDATE_TEST4_STATUS}" -eq "${SUCCESS}" ]
 then
 	UPDATE_TEST4_SCORE=6

@@ -33,6 +33,9 @@ struct Transaction {
   int successCount;
   int failCount;
   MessageType messageType;
+  string key;
+  string value;
+  int timestamp;
 };
 
 class MP2Node {
@@ -45,10 +48,6 @@ private:
 	vector<Node> ring;
 	// Hash Table
 	HashTable * ht;
-	// Secondary Hash Table to hold the keys of the previous neighbor in the ring
-	HashTable * sec_ht;
-	// Tertiary Hash Table to hold the keys of the second previous neighbor in the ring
-	HashTable * ter_ht;
   // Hash Table to keep track of the transactions
   map<int, Transaction>* trans_ht;
 	// Member representing this member

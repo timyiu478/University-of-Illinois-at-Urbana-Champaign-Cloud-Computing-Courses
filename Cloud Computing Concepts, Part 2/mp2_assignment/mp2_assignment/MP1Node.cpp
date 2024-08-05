@@ -98,7 +98,7 @@ int MP1Node::initThisNode(Address *joinaddr) {
 	*/
 	id = *(int*)(&memberNode->addr.addr);
 	port = *(short*)(&memberNode->addr.addr[4]);
-  numberOfRandomTarget = 6;
+  numberOfRandomTarget = 9;
 
 	memberNode->bFailed = false;
 	memberNode->inited = true;

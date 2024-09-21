@@ -19,11 +19,9 @@ For each task, you must answer a subset of the following questions. Each questio
 
 Group 1 (Answer any 2):
 
-Rank the top 10 most popular airports by numbers of flights to/from the airport.
-
-Rank the top 10 airlines by on-time arrival performance.
-
-Rank the days of the week by on-time arrival performance.
+1. Rank the top 10 most popular airports by numbers of flights to/from the airport.
+1. Rank the top 10 airlines by on-time arrival performance.
+1. Rank the days of the week by on-time arrival performance.
 
 Group 2 (Answer any 3):
 
@@ -33,19 +31,15 @@ Task 1 Queries
 Task 2 Queries
 .
 
-For each airport X, rank the top-10 carriers in decreasing order of on-time departure performance from X.
-
-For each airport X, rank the top-10 airports in decreasing order of on-time departure performance from X.
-
-For each source-destination pair X-Y, rank the top-10 carriers in decreasing order of on-time arrival performance at Y from X.
-
-For each source-destination pair X-Y, determine the mean arrival delay (in minutes) for a flight from X to Y.
+1. For each airport X, rank the top-10 carriers in decreasing order of on-time departure performance from X.
+1. For each airport X, rank the top-10 airports in decreasing order of on-time departure performance from X.
+1. For each source-destination pair X-Y, rank the top-10 carriers in decreasing order of on-time arrival performance at Y from X.
+1. For each source-destination pair X-Y, determine the mean arrival delay (in minutes) for a flight from X to Y.
 
 Group 3 (Answer both questions using Hadoop. You may also use Spark Streaming to answer Question 2.):
 
-Does the popularity distribution of airports follow a Zipf distribution? If not, what distribution does it follow?
-
-Tom wants to travel from airport X to airport Z. However, Tom also wants to stop at airport Y for some sightseeing on the way. More concretely, Tom has the following requirements (for specific queries, see the
+1. Does the popularity distribution of airports follow a Zipf distribution? If not, what distribution does it follow?
+1. Tom wants to travel from airport X to airport Z. However, Tom also wants to stop at airport Y for some sightseeing on the way. More concretely, Tom has the following requirements (for specific queries, see the
  
 Task 1 Queries
  and 
@@ -68,9 +62,8 @@ For example, after completing Question 2.2, a user should be able to provide an 
 
 The submission you need to generate for each task consists of:
 
-A report documenting what you have done with justification and explanation. The report should address all criteria in the grading rubric and in the submission details described in each task. The report will be no longer than 4-5 pages, 11 point font.
-
-A video demonstration of the use of your system to answer the required questions. For the queries in Group 2 and Question 3.2, it will suffice to illustrate the results for a small subset of queries. The video demo should be no longer than 5 minutes.
+1. A report documenting what you have done with justification and explanation. The report should address all criteria in the grading rubric and in the submission details described in each task. The report will be no longer than 4-5 pages, 11 point font.
+1. A video demonstration of the use of your system to answer the required questions. For the queries in Group 2 and Question 3.2, it will suffice to illustrate the results for a small subset of queries. The video demo should be no longer than 5 minutes.
 
 Further details are provided in the instructions for each task. For your Task 2 report, you will also be asked to include a general comparison of the stacks used in each task (Hadoop, Storm, Spark).
 
